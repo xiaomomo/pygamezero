@@ -2,6 +2,7 @@
 import math
 
 import pgzrun
+import pygame
 
 GUN_LOCATION = 25  # 枪在枪手的位置
 GUNNER_SPEED = 20  # 枪手移动速度
@@ -18,8 +19,11 @@ gunner = Actor('gunner', (400, 400))
 # 代表了‘演员’的‘中心点’。当演员旋转时，会以这个点为原点旋转。我们让瞄准线的锚点设置为x方向的
 # 左侧，y方向的中部，也就是位于瞄准线的左中。
 aim_line = Actor('aimline', anchor=('left', 'center'))
-
+# 子弹列表
 bullet_list = []
+enemy = Actor('enemy', (300, 300))
+
+delta = 0
 
 
 # 当键盘被按下是触发这个函数
@@ -60,8 +64,21 @@ def update():
     aim_line.x = gunner.x + gunner.width / 2
     aim_line.y = gunner.y + GUN_LOCATION
     for bullet in bullet_list:
-        bullet.x = bullet.x + BULLET_SPEED * math.cos(bullet.angle)
-        bullet.y = bullet.y + BULLET_SPEED * math.sin(bullet.angle)
+        # 如果子弹打中敌方，就结束游戏
+        if bullet.colliderect(enemy):
+            print('game over')
+            enemy.dead = True
+            pygame.event.post(pygame.event.Event(pygame.QUIT))
+        # 根据角度算出x方向速度和y方向速度
+        bullet.x = bullet.x + BULLET_SPEED * math.cos(math.radians(bullet.angle))
+        bullet.y = bullet.y - BULLET_SPEED * math.sin(math.radians(bullet.angle))
+    # 每隔n秒移动一次
+    global delta
+    delta += 1
+    if (delta == 10):
+        enemy.x += 5
+        enemy.y += 5
+        delta = 0
 
 
 # 3. 改变完状态后，重新把各个角色渲染到游戏舞台上
@@ -75,6 +92,7 @@ def draw():
     gunner.draw()
     # 瞄准线
     aim_line.draw()
+    enemy.draw()
     # 渲染子弹
     for bullet in bullet_list:
         bullet.draw()
